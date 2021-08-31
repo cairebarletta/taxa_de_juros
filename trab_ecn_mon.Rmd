@@ -1,0 +1,337 @@
+---
+output:
+    pdf_document :
+      latex_engine : xelatex
+urlcolor: blue
+number_sections: true
+title: 
+    "**Trabalho de Economia Monetária - UDESC**"
+subtitle:
+    "_Análise do comportamento da taxa de juros_"
+author:
+    "Cairê Britto Barletta e Gabriel Akira"
+date: 
+    "08/08/2021"
+geometry: margin = 1in
+fontsize: 12pt
+fig_caption: yes
+indent: true
+---
+
+```{r, include = F}
+#bibliotecas utilizadas
+library(knitr)
+library(dplyr)
+library(tidyquant)
+library(readxl)
+library(ggplot2)
+library(scales)
+library(BETS)
+```
+
+## 1. Introdução
+
+&emsp;&emsp; A taxa básica de juros brasileira (Selic) após a mudança de governo em 2019 sofreu diversas alterações. A Selic Meta era 6,50% a.a em janeiro de 2019 chegando ao vale de 2,00% a.a em agosto de 2020, e no período vigente a taxa é de 5,25% a.a, conforme o _Gráfico 1_. No presente trabalho, iremos analisar o comportamento da taxa de juros no período, e entender as movimentações feitas pelo Banco Central.
+
+```{r, include = F}
+#inputs iniciais
+first_date <- "2019-01-01"
+last_date <- "2021-06-01"
+
+#puxando dados da Selic Meta definida pelo Copom
+selic <- BETSget(432, data.frame = T) %>%
+  filter(date >= first_date)
+```
+
+```{r, echo = F, error = F, warning = F, message = F}
+graf_selic <- selic %>%
+  ggplot(aes(x = date)) +
+  geom_line(aes(y = value), color = "darkblue", size = 1) +
+  geom_line(aes(y = tail(value, 1)), linetype = 2, color = "red") +
+  scale_x_date(breaks = "3 months",
+               labels = scales::date_format("%Y/%m")) +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.01, decimal.mark = ',')) +
+  labs(title = "Meta da taxa Selic definida pelo Copom (% a.a.)",
+       x = element_blank(), 
+       y = element_blank(), 
+       caption = "Fonte: Banco Central do Brasil. Elaboração dos Autores.") + 
+  theme_light() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+```
+\vspace{12pt}
+
+\begin{center}
+\emph{Gráfico 1}
+\end{center}
+
+```{r, echo = F, error = F, warning = F, message = F, fig.align = "center", fig.height = 4, fig.width = 10}
+graf_selic
+```
+
+## 2. Regime de metas de inflação e Regra de Taylor
+
+&emsp;&emsp; Antes de começarmos a analisar os dados, é necessária uma revisão teórica para entender quais são os motivos que levam o Banco Central a alterar a meta da taxa de juros. Assim faremos uma breve análise sobre o regime de **metas de inflação e a Regra de Taylor**.
+
+&nbsp; A partir de 1990, bancos centrais do mundo todo começaram a basear sua política monetária no regime de metas de inflação, o Brasil por sua vez, adotou o regime em 1999.
+
+&nbsp; Segundo documento do Banco Central do Brasil: “O regime de metas para a inflação é um regime monetário no qual o banco central se compromete a atuar de forma a garantir que a inflação efetiva esteja em linha com uma meta pré-estabelecida, anunciada publicamente.” (Banco central, 2016). Na prática, o Banco Central determina uma meta de inflação, e altera as taxas de juros para atingir a meta. Para entender o processo de forma mais clara vejamos a Regra de Taylor:
+
+$$i_t = i^* + \alpha (\pi_t - \pi^*) - \beta (\mu_t - \mu_n)$$
+\hspace{12pt}
+
+**Onde**:
+$i_t$ é a taxa nominal de juros; 
+$i^*$ é a meta da taxa nominal de juros;
+$\pi_t$ é a taxa de inflação;
+$\pi^*$ é a meta da taxa de inflação;
+$\mu_t$ é a taxa de desemprego desemprego; e
+$\mu_n$ é a taxa natural de desemprego.
+
+&nbsp; A regra de Taylor é uma regra proposta por John Taylor, no qual ele sugere que o Banco Central deve escolher uma meta para inflação, e fixar uma taxa de juros para atingir essa meta. Por exemplo, supondo uma situação na qual $\pi_t > \pi^*$, seguindo a regra de Taylor, para manter a inflação dentro da meta, o Banco central deve fazer alterações em $(\mu_t - \mu_n)$, em que uma das formas seria aumentar a meta da taxa de juros $i^*$, o que levaria a uma redução no investimento agregado, que por sua vez, aumentaria o desemprego, levando a uma diminuição da inflação.
+
+&nbsp; Outra situação é quando, por exemplo $\mu_t > \mu_n$, onde nesse caso o desemprego está menor que o natural, de forma que seguindo a regra de Taylor, o Banco central, para manter a inflação dentro da meta, deve diminuir a meta da taxa de juros $i^*$, para diminuir o desemprego, e manter a inflação na meta.
+
+&nbsp; Taylor ainda propõe que o termo $\alpha$ da equação deve ser maior que um, uma vez que as decisões de investimento são tomadas em relação a taxa real de juros. Assim, para diminuir a inflação, o Banco Central deve fazer um aumento de proporção maior na taxa de juros nominal, até ultrapassar o efeito da inflação sobre a taxa de juros real. O exemplo todo é inspirado em (BLANCHARD , 2004).
+
+## 3. Análise dos dados
+
+&emsp;&emsp; O Banco Central do Brasil não segue exatamente a regra de Taylor para decidir a Selic Meta. No entanto, a regra pode dar uma boa noção do comportamento dos Bancos Centrais que seguem o regime de meta de inflação.
+
+&nbsp; Como visto no exemplo anterior, caso $\pi_t > \pi^*$, o Banco Central deverá aumentar a taxa de juros, e de forma análoga caso $\pi_t < \pi^*$, o Banco central deverá reduzir a taxa de juros. Essas duas situações aconteceram no Brasil no período analisado, conforme podemos observar no _Gráfico 2_.
+
+```{r, include = F}
+#dados diversos do ipca obtidos da serie 11427 do BCB, em formato .csv
+dados_ipca <- read.csv("dados_ipca.csv", sep = ",")
+
+#dados para elaboração do gráfico 2
+subdados1 <- dados_ipca %>%
+  select(c(data, IPCA.var....a, lim_sup, lim_inf, meta))
+colnames(subdados1) <- c("data", "ipca", "lim_sup", "lim_inf", "meta")
+
+#dados para elaboração do gráfico 3
+subdados2 <- dados_ipca %>%
+  select(c(data, IPCA.var....a, ipca_EX0.var....a, lim_sup, lim_inf))
+colnames(subdados2) <- c("data", "ipca", "ipca_ex0","lim_sup", "lim_inf")
+```
+
+```{r, echo = F, error = F, warning = F, message = F}
+graf_ipca1 <- subdados1 %>%
+  ggplot(aes(x = as.Date(data), group = 1)) +
+  geom_line(aes(y = ipca, colour = "IPCA"), size = 0.8) +
+  geom_line(aes(y = lim_sup, colour = "Limite superior"), linetype = 2, size = 0.8) +
+  geom_line(aes(y = lim_inf, colour = "Limite inferior"), linetype = 2, size = 0.8) +
+  geom_line(aes(y = meta, colour = "Meta"), size = 0.8) +
+  scale_color_manual(name = element_blank(),
+                     values = c("IPCA" = "darkblue", 
+                                "Limite superior" = "red",
+                                "Limite inferior" = "red",
+                                "Meta" = "cyan")) +
+  scale_x_date(breaks = "3 months",
+               labels = scales::date_format("%Y/%m")) +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.01, decimal.mark = ',')) +
+  labs(title = "IPCA, limites e meta (% a.a.)",
+       x = element_blank(), 
+       y = element_blank(), 
+       caption = "Fonte: Banco Central do Brasil. Elaboração dos Autores.") + 
+  theme_light() + theme(legend.position = "bottom",
+                        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+```
+\newpage
+
+\begin{center}
+\emph{Gráfico 2}
+\end{center}
+
+```{r, echo = F, error = F, warning = F, message = F, fig.align = "center", fig.height = 4, fig.width = 10}
+graf_ipca1
+```
+
+&nbsp; Como podemos observar, a inflação estava abaixo do limite inferior em outubro de 2019, entre abril e julho de 2020, e estava acima da meta, a partir de março de 2021 até o período atual. De forma a aprofundar um pouco mais a análise, podemos verificar os núcleos de inflação, dado que essa diferença entre inflação real e a meta, pode ocorrer pela diferença de preços em apenas alguns produtos (núcleos), de forma que o IPCA cheio, não representaria de forma real a inflação do país.
+
+&nbsp; O _Gráfico 3_, semelhante ao _Gráfico 2_, mostra o índice de preço e seus limites, com o acréscimo nos núcleos de inflação _IPCA_EX0_.
+
+```{r, echo = F, error = F, warning = F, message = F}
+graf_ipca2 <- subdados2 %>%
+  ggplot(aes(x = as.Date(data), group = 1)) +
+  geom_line(aes(y = ipca, colour = "IPCA"), size = 0.8) +
+  geom_line(aes(y = lim_sup, colour = "Limite superior"), linetype = 2, size = 0.8) +
+  geom_line(aes(y = lim_inf, colour = "Limite inferior"), linetype = 2, size = 0.8) +
+  geom_line(aes(y = ipca_ex0, colour = "IPCA_EX0"), size = 0.8) +
+  scale_color_manual(name = element_blank(),
+                     values = c("IPCA" = "darkblue", 
+                                "Limite superior" = "red",
+                                "Limite inferior" = "red",
+                                "IPCA_EX0" = "cyan")) +
+  scale_x_date(breaks = "3 months",
+               labels = scales::date_format("%Y/%m")) +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.01, decimal.mark = ',')) +
+  labs(title = "IPCA, IPCA_EX0 e limites (% a.a.)",
+       x = element_blank(), 
+       y = element_blank(), 
+       caption = "Fonte: Banco Central do Brasil. Elaboração dos Autores.") + 
+  theme_light() + theme(legend.position = "bottom",
+                        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+```
+\hspace{12pt}
+
+\begin{center}
+\emph{Gráfico 3}
+\end{center}
+
+```{r, echo = F, error = F, warning = F, message = F, fig.align = "center", fig.height = 4, fig.width = 10}
+graf_ipca2
+```
+
+&nbsp; Nota-se que o _IPCA_EX0_, que exclui os preços de alimentação em domicílio e os preços administrados, está para todo período, bem abaixo do IPCA cheio. Isso significa que grande parte da inflação do período pode ser explicada, pelos preços de alimentação e administrados, de forma que a diferença entre a inflação e o limite inferior entre abril e julho de 2020 era ainda maior, e que a inflação atual está fora da meta, também muita por conta desses preços. Assim, qual foi a reação observada do Banco Central nesses momentos?
+
+&nbsp; No primeiro momento de destaque (outubro de 2019), a inflação estava abaixo do limite inferior, no entanto, o IPCA já vinha em constante queda desde julho de 2019. Assim, como esperado pela regra de Taylor, as [reuniões do Copom 224, 225 e 226](https://www.bcb.gov.br/controleinflacao/historicotaxasjuros) reduziram a taxa de juros de 6,50% até 5,00%. A justificativa do Banco Central foi justamente a constante queda nos preços, devido a ociosidade do produto brasileiro, devido aos baixos índices de utilização da capacidade da indústria e, principalmente, pela alta taxa de desemprego. Note-se que de acordo com a Regra de Taylor, quando têm-se $\mu_t > \mu_n$, o Banco Central deve reduzir os juros, e que uma alta no desemprego é equivalente a um produto abaixo do potencial.
+
+&nbsp; Os mesmos fatores podem ser vistos no segundo momento destacado (abril e julho de 2020). No entanto, com um grande agravante do _lockdown_. Assim, nas reuniões do Copom 227 até 232, o Banco Central decidiu por reduzir a Meta da Selic, de 5,00% até 2,00%.
+
+&nbsp; No _Gráfico 4_, temos o hiato do produto, que é a diferença do PIB efetivo e do PIB potencial. Assim, em setembro de 2019 o hiato era -5,80% e em junho de 2020 o hiato era de -13,30%, o que confirma as justificativas do Banco Central para reduzir a taxa de juros.
+
+```{r, include = F}
+#dados do hiato do pib obtidos no IFI
+url <- 'https://www12.senado.leg.br/ifi/dados/arquivos/estimativas-do-hiato-do-produto-ifi/at_download/file'
+download.file(url, destfile = "hiato_pib.xlsx", mode = "wb")
+
+#lendo o arquivo excel
+hiato_pib <- read_excel("hiato_pib.xlsx", sheet = 2, skip = 1)
+colnames(hiato_pib) <- c("trim", "lim_inf", "hiato", "lim_sup")
+```
+
+```{r, echo = F, error = F, warning = F, message = F}
+graf_hp <- hiato_pib %>%
+  ggplot(aes(x = as.Date(trim))) +
+  geom_line(aes(y = hiato), color = "darkblue", size = 1) +
+  geom_line(y = 0, linetype = 2, color = "red") +
+  scale_x_date(breaks = "1 year",
+               labels = scales::date_format("%Y")) +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.01, decimal.mark = ',')) +
+  labs(title = "Hiato do Produto Brasileiro",
+       x = element_blank(), 
+       y = "Variação percentual (a.t.)", 
+       caption = "Fonte: Instituto Fiscal Independente. Elaboração dos Autores.") + 
+  theme_light() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+```
+\hspace{12pt}
+
+\begin{center}
+\emph{Gráfico 4}
+\end{center}
+
+```{r, echo = F, error = F, warning = F, message = F, fig.align = "center", fig.height = 4, fig.width = 10}
+graf_hp
+```
+
+&nbsp; Uma variável que pode verificar a ociosidade do PIB é o IBC-br, que é construído com base em _proxies_ representativas dos índices de volume da produção da agropecuária, da indústria e
+do setor de serviços, além do índice de volume dos impostos sobre a produção. Assim, o _Gráfico 5_ mostra o índice ao longo do período.
+
+```{r, include = F}
+#dados IBC-Br
+ibc_br <- BETSget(24363, data.frame = T) %>%
+  filter(date >= first_date) %>%
+  rename(ibc_br = value)
+```
+
+```{r, echo = F, error = F, warning = F, message = F}
+graf_ibcbr <- ibc_br %>%
+  ggplot(aes(x = as.Date(date))) +
+  geom_line(aes(y = ibc_br), color = "darkblue", size = 1) +
+  geom_line(y = mean(ibc_br$ibc_br), linetype = 2, color = "red") +
+  scale_x_date(breaks = "3 months",
+               labels = scales::date_format("%Y/%m")) +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.01, decimal.mark = ',')) +
+  labs(title = "Índice de Atividade Econômica do Banco Central",
+       x = element_blank(), 
+       y = element_blank(), 
+       caption = "Fonte: Banco Central do Brasil. Elaboração dos Autores.") + 
+  theme_light() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+```
+\newpage
+
+\begin{center}
+\emph{Gráfico 5}
+\end{center}
+
+```{r, echo = F, error = F, warning = F, message = F, fig.align = "center", fig.height = 4, fig.width = 10}
+graf_ibcbr
+```
+
+&nbsp; Outra variável para verificar a ociosidade do PIB, com o mesmo intuito, é a taxa de desemprego, onde o _Gráfico 6_ mostra a taxa ao longo do período.
+
+```{r, include = F}
+#dados taxa de desocupacao
+tx_desemp <- BETSget(24369, data.frame = T) %>%
+  filter(date >= first_date) %>%
+  rename(tx_desemp = value)
+```
+
+```{r, echo = F, error = F, warning = F, message = F}
+graf_txdesemp <- tx_desemp %>%
+  ggplot(aes(x = as.Date(date))) +
+  geom_line(aes(y = tx_desemp), color = "darkblue", size = 1) +
+  geom_line(y = mean(tx_desemp$tx_desemp), linetype = 2, color = "red") +
+  scale_x_date(breaks = "2 months",
+               labels = scales::date_format("%Y/%m")) +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.01, decimal.mark = ',')) +
+  labs(title = "Taxa de Desemprego",
+       x = element_blank(), 
+       y = "%", 
+       caption = "Fonte: Banco Central do Brasil. Elaboração dos Autores.") + 
+  theme_light() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+```
+\hspace{12pt}
+
+\begin{center}
+\emph{Gráfico 6}
+\end{center}
+
+```{r, echo = F, error = F, warning = F, message = F, fig.align = "center", fig.height = 4, fig.width = 10}
+graf_txdesemp
+```
+
+&nbsp; Verificando os dados, fica evidente que o Banco Central, segundo a regra de Taylor, tomou uma decisão adequada, de reduzir a taxa de juros, porém vale se questionar: “Será que o Banco Central demorou muito para reduzir essa taxa? E será que a redução foi na magnitude correta?”.
+
+&nbsp; Para responder essas perguntas, a Regra de Taylor não nos ajuda muito, uma vez que a única informação que o modelo traz a respeito do valor da redução, é que o parâmetro $\alpha$ deve ser maior que 1. No entanto, principalmente para um país subdesenvolvido e com histórico de hiperinflação como o Brasil, seguir a recomendação de $\alpha > 1$, ou seja, a reduzir a taxa de juros em proporção maior que diferença da inflação meta e inflação real, nem sempre é o mais recomendável, pois outros fatores devem ser levados em consideração, como o câmbio, o risco-país e a inflação esperada, vejamos.
+
+&nbsp; Supondo um cenário em que o Banco Central ao invés de ter reduzido de forma gradual a Selic de 6,50% para 2,00%, fizesse isso de uma vez, em abril de 2020. Nesse cenário, se considerarmos que o câmbio no curto prazo segue a hipótese da paridade descoberta da taxa de juros, a baixa taxa de juros brasileira faria com que os títulos ficassem menos atraentes, sendo assim, teríamos uma redução na demanda por Reais (R$), de forma que o câmbio dispararia de uma vez, causando um forte aumento nos preços dos produtos relacionados ao dólar, e com isso, teríamos aumento da inflação.De forma parecida, o risco do país também reduz a demanda por títulos brasileiros, e pode levar ao mesmo efeito.
+
+&nbsp; Já no terceiro momento (março de 2021 até o período atual), a inflação se encontrava acima da meta. Entretanto, como visto no _Gráfico 3_, muito por conta dos preços de alimentação e dos preços administrados. Assim, o Banco Central nas reuniões do Copom 237 (em março de 2021) até a 240, aumentou a meta da Selic de 2,00% para 5,25%. A principal justificativa desse aumento foi a recuperação da economia mundial devido aos avanços na implementação dos programas de imunização contra a Covid-19, a retomada econômica brasileira e a reversão da expectativa de inflação. Portanto, no terceiro momento analisado, o Banco Central agiu novamente de acordo com a Regra de Taylor, conforme o _Gráfico 4_.
+
+## 4	Aprofundando a análise: o impacto das expectativas de inflação
+
+&emsp;&emsp; A Regra de Taylor, apresentada na Sessão 2, não levava em consideração as expectativas de inflação. No entanto, as discussões de política monetária, principalmente depois da conhecida crítica de Lucas, começaram a levar em consideração as hipóteses de expectativas racionas. Assim, modelos como o de viés inflacionário Barro-Gordon (1983), Kydland e Prescott (1977) e Sargent e Wallace (1981) tratam do problema.
+
+&nbsp; De qualquer maneira, nesse trabalho será feito apenas um ajuste na Regra de Taylor, para analisar o comportamento da taxa de juros com base nos dados de expectativas de inflação.
+
+&nbsp; Se substituirmos $\pi_t$ por $\pi^e$ e $\mu_t$ por $\mu^e$ na Regra de Taylor apresentada na Sessão 2, temos uma nova Regra de Taylor, na qual o Banco Central deve decidir uma meta na taxa de juros com base na diferença entre inflação esperada e meta de inflação. Temos então:
+
+$$i_t = i^* + \alpha (\pi^e - \pi^*) - \beta (\mu^e - \mu_n)$$
+
+&nbsp; A [_Tabela 1_](https://www3.bcb.gov.br/expectativas2/#/consultaSeriesEstatisticas) mostra a mediana da expectativa de inflação de curto prazo das top cinco empresas do boletim Focus nos períodos de mudança da de taxa de juros.
+
+\newpage
+
+\begin{center}
+\emph{Tabela 1}
+\end{center}
+
+```{r, echo = F, error = F, warning = F, message = F, fig.align = "center", fig.height = 3, fig.width = 7}
+knitr::include_graphics("img1.png")
+```
+
+&nbsp; Por fim, é possível verificar que todas as vezes que ocorreu uma mudança nas expectativas de inflação, o Banco Central reagiu de acordo, reduzindo a meta da taxa de juros no primeiro e segundo e momento, e aumentando a taxa de juros no terceiro momento, o que vai de acordo com a Regra de Taylor, considerando as expectativas de inflação.
+
+\newpage
+
+## Referências
+
+- BLANCHARD, Olivier. "Macroeconomia. Tradução de Mônica Rosemberg." (2004), Cap 25.
+
+- WILHER.V, “Definindo o hiato do produto” disponível no link: https://analisemacro.com.br/economia/pib/definindo-o-hiato-do-produto/
+
+- Barro, Robert J., and David B. Gordon. "Rules, discretion and reputation in a model of monetary policy." Journal of monetary economics 12.1 (1983): 101-121.
+
+- Kydland, Finn E., and Edward C. Prescott. "Rules rather than discretion: The inconsistency of optimal plans." Journal of political economy 85.3 (1977): 473-491.
+
+- Sargent, Thomas J., and Neil Wallace. "Some unpleasant monetarist arithmetic." Federal reserve bank of minneapolis quarterly review 5.3 (1981): 1-17.
