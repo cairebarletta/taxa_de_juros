@@ -307,8 +307,9 @@ graf_txdesemp
 &nbsp; Se substituirmos $\pi_t$ por $\pi^e$ e $\mu_t$ por $\mu^e$ na Regra de Taylor apresentada na Sessão 2, temos uma nova Regra de Taylor, na qual o Banco Central deve decidir uma meta na taxa de juros com base na diferença entre inflação esperada e meta de inflação. Temos então:
 
 $$i_t = i^* + \alpha (\pi^e - \pi^*) - \beta (\mu^e - \mu_n)$$
+\hspace{12pt}
 
-&nbsp; A [_Tabela 1_](https://www3.bcb.gov.br/expectativas2/#/consultaSeriesEstatisticas) mostra a mediana da expectativa de inflação de curto prazo das top cinco empresas do boletim Focus nos períodos de mudança da de taxa de juros.
+&nbsp; A [_Tabela 1_](https://www3.bcb.gov.br/expectativas2/#/consultaSeriesEstatisticas) mostra a mediana da expectativa de inflação de curto prazo das top cinco empresas do boletim Focus nos períodos de mudança da taxa de juros.
 
 \newpage
 
