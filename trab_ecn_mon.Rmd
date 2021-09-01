@@ -1,7 +1,7 @@
 ---
 output:
-    pdf_document :
-      latex_engine : xelatex
+    pdf_document:
+      latex_engine: xelatex
 urlcolor: blue
 number_sections: true
 title: 
@@ -76,9 +76,9 @@ graf_selic
 &nbsp; Segundo documento do Banco Central do Brasil: “O regime de metas para a inflação é um regime monetário no qual o banco central se compromete a atuar de forma a garantir que a inflação efetiva esteja em linha com uma meta pré-estabelecida, anunciada publicamente.” (Banco central, 2016). Na prática, o Banco Central determina uma meta de inflação, e altera as taxas de juros para atingir a meta. Para entender o processo de forma mais clara vejamos a Regra de Taylor:
 
 $$i_t = i^* + \alpha (\pi_t - \pi^*) - \beta (\mu_t - \mu_n)$$
-\hspace{12pt}
+\vspace{12pt}
 
-**Onde**:
+&nbsp; **Onde**:
 $i_t$ é a taxa nominal de juros; 
 $i^*$ é a meta da taxa nominal de juros;
 $\pi_t$ é a taxa de inflação;
@@ -171,7 +171,7 @@ graf_ipca2 <- subdados2 %>%
   theme_light() + theme(legend.position = "bottom",
                         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 ```
-\hspace{12pt}
+\vspace{12pt}
 
 \begin{center}
 \emph{Gráfico 3}
@@ -213,7 +213,7 @@ graf_hp <- hiato_pib %>%
        caption = "Fonte: Instituto Fiscal Independente. Elaboração dos Autores.") + 
   theme_light() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 ```
-\hspace{12pt}
+\vspace{12pt}
 
 \begin{center}
 \emph{Gráfico 4}
@@ -280,7 +280,7 @@ graf_txdesemp <- tx_desemp %>%
        caption = "Fonte: Banco Central do Brasil. Elaboração dos Autores.") + 
   theme_light() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 ```
-\hspace{12pt}
+\vspace{12pt}
 
 \begin{center}
 \emph{Gráfico 6}
@@ -298,7 +298,7 @@ graf_txdesemp
 
 &nbsp; Já no terceiro momento (março de 2021 até o período atual), a inflação se encontrava acima da meta. Entretanto, como visto no _Gráfico 3_, muito por conta dos preços de alimentação e dos preços administrados. Assim, o Banco Central nas reuniões do Copom 237 (em março de 2021) até a 240, aumentou a meta da Selic de 2,00% para 5,25%. A principal justificativa desse aumento foi a recuperação da economia mundial devido aos avanços na implementação dos programas de imunização contra a Covid-19, a retomada econômica brasileira e a reversão da expectativa de inflação. Portanto, no terceiro momento analisado, o Banco Central agiu novamente de acordo com a Regra de Taylor, conforme o _Gráfico 4_.
 
-## 4	Aprofundando a análise: o impacto das expectativas de inflação
+## 4. Aprofundando a análise: o impacto das expectativas de inflação
 
 &emsp;&emsp; A Regra de Taylor, apresentada na Sessão 2, não levava em consideração as expectativas de inflação. No entanto, as discussões de política monetária, principalmente depois da conhecida crítica de Lucas, começaram a levar em consideração as hipóteses de expectativas racionas. Assim, modelos como o de viés inflacionário Barro-Gordon (1983), Kydland e Prescott (1977) e Sargent e Wallace (1981) tratam do problema.
 
@@ -307,7 +307,7 @@ graf_txdesemp
 &nbsp; Se substituirmos $\pi_t$ por $\pi^e$ e $\mu_t$ por $\mu^e$ na Regra de Taylor apresentada na Sessão 2, temos uma nova Regra de Taylor, na qual o Banco Central deve decidir uma meta na taxa de juros com base na diferença entre inflação esperada e meta de inflação. Temos então:
 
 $$i_t = i^* + \alpha (\pi^e - \pi^*) - \beta (\mu^e - \mu_n)$$
-\hspace{12pt}
+\vspace{12pt}
 
 &nbsp; A [_Tabela 1_](https://www3.bcb.gov.br/expectativas2/#/consultaSeriesEstatisticas) mostra a mediana da expectativa de inflação de curto prazo das top cinco empresas do boletim Focus nos períodos de mudança da taxa de juros.
 
